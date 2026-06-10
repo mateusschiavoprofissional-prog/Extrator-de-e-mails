@@ -110,7 +110,7 @@ Abra o arquivo **[`app.py`](file:///c:/extrator-gmail/app.py)** a partir da linh
 ```python
 PESOS_RANKING = {
     "anos": {
-        2026: 100.0,  # Peso para e-mails enviados em 2026 (ano corrente)
+        2026: 200.0,  # Peso para e-mails enviados em 2026 (ano corrente)
         2025: 30.0,   # Peso para e-mails de 2025
         2024: 10.0,   # Peso para e-mails de 2024
         2023: 3.0,    # Peso para e-mails de 2023
@@ -127,7 +127,7 @@ PESOS_RANKING = {
 
 #### 📅 A. Pesos Anuais (`anos`)
 Define a pontuação base que cada envio recebe de acordo com o ano. Valores maiores dão peso exponencial a e-mails novos. 
-* *Exemplo:* Com o peso de 2026 configurado em `100.0` e 2023 em `3.0`, basta **1 único envio** em 2026 para ganhar de **33 envios** de 2023 no ranking!
+* *Exemplo:* Com o peso de 2026 configurado em `200.0` e 2023 em `3.0`, basta **1 único envio** em 2026 para ganhar de **66 envios** de 2023 no ranking!
 
 #### ✉️ B. Bônus de Reenvio Detectado (`bonus_eh_reenvio`)
 Uma pontuação extra fixa que é somada a cada evento individual se ele possuir formatação clássica de encaminhamento ou reenvio (como prefixos `Fwd:`, `Enc:`, etc.). 

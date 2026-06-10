@@ -258,7 +258,7 @@ def eh_reenvio(assunto, snippet):
 PESOS_RANKING = {
     # 1. Pesos por ano de envio (quanto mais novo, mais relevante)
     "anos": {
-        2026: 100.0,  # Ano corrente
+        2026: 200.0,  # Ano corrente
         2025: 30.0,
         2024: 10.0,
         2023: 3.0,
@@ -1656,7 +1656,7 @@ def export_html(tema: str = Query("purple")):
                         
                         const PESOS = {{
                             anos: {{
-                                2026: 100.0,
+                                2026: 200.0,
                                 2025: 30.0,
                                 2024: 10.0,
                                 2023: 3.0,
@@ -1664,7 +1664,7 @@ def export_html(tema: str = Query("purple")):
                                 outros: 0.1
                             }},
                             bonus_eh_reenvio: 20.0,
-                            bonus_recencia_12m: 15.0,
+                            bonus_recencia_12m: 25.0,
                             multiplicador_volume_total: 0.5
                         }};
                         
@@ -1870,7 +1870,7 @@ def export_html(tema: str = Query("purple")):
                         
                         const PESOS = {{
                             anos: {{
-                                2026: 100.0,
+                                2026: 200.0,
                                 2025: 30.0,
                                 2024: 10.0,
                                 2023: 3.0,
