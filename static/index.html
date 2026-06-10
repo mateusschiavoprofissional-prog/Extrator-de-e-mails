@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar de Reenvios - Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="css/styles.css?v=1.0.1">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- HEADER -->
+        <header>
+            <div class="brand-section">
+                <h1><i data-lucide="radar"></i> Radar de Reenvios</h1>
+                <p>Identificação, agrupamento e ranqueamento de e-mails reutilizados via Gmail API</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <div class="active-profile-indicator" id="activeProfileIndicator">
+                        Perfil Ativo: <strong id="lblActiveProfileName">Carregando...</strong>
+                    </div>
+                    <div class="auth-status-indicator" id="authStatusIndicator">
+                        Status: <span class="badge badge-warning" id="lblAuthStatus">Verificando...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <div class="sync-status" id="syncStatusSection">
+                    <span>Última Sincronização</span>
+                    <strong id="lblLastSync">-</strong>
+                </div>
+                
+                <!-- BOTOES DE CONTROLE DE SINCRONIZACAO -->
+                <div class="sync-controls">
+                    <button class="btn-primary" id="btnSyncStart" title="Iniciar/Retomar Sincronização">
+                        <i data-lucide="play"></i> Iniciar
+                    </button>
+                    <button class="btn-secondary" id="btnSyncPause" title="Pausar Sincronização" disabled>
+                        <i data-lucide="pause"></i> Pausar
+                    </button>
+                    <button class="btn-secondary" id="btnSyncStop" title="Parar e Limpar Sincronização" disabled>
+                        <i data-lucide="square"></i> Parar
+                    </button>
+                    <button class="btn-restart" id="btnSyncRestart" title="Reiniciar extração do zero">
+                        <i data-lucide="rotate-ccw"></i> Reiniciar
+                    </button>
+                </div>
+                
+                <button class="btn-secondary" id="btnGoToSettings" title="Configurações de Perfis">
+                    <i data-lucide="settings"></i> Configurações
+                </button>
+            </div>
+        </header>
+
+        <!-- PROGRESS BAR -->
+        <div class="sync-progress-card" id="syncProgressCard" style="display: none;">
+            <div class="progress-details">
+                <span class="progress-label" id="progressLabel">Processando mensagens...</span>
+                <span class="progress-percent" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <div class="progress-sub-info" id="progressSubInfo">
+                Iniciando leitura de e-mails do Gmail...
+            </div>
+        </div>
+
+        <!-- TELA DO DASHBOARD -->
+        <div id="viewDashboard">
+            <!-- DASHBOARD STATS GRID -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>E-mails Analisados</span>
+                        <div class="stat-icon"><i data-lucide="mail"></i></div>
+                    </div>
+                    <div class="stat-value" id="statAnalyzed">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>Reenvios Detectados</span>
+                        <div class="stat-icon" style="color: var(--accent-color);"><i data-lucide="forward"></i></div>
+                    </div>
+                    <div class="stat-value" id="statForwards">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>E-mail Mais Reenviado</span>
+                        <div class="stat-icon" style="color: var(--accent-success);"><i data-lucide="award"></i></div>
+                    </div>
+                    <div class="stat-value" id="statMostForwarded" style="font-size: 1.1rem; line-height: 1.4;">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>Mais Relevante (Score)</span>
+                        <div class="stat-icon" style="color: var(--accent-warning);"><i data-lucide="zap"></i></div>
+                    </div>
+                    <div class="stat-value" id="statMostRelevant" style="font-size: 1.1rem; line-height: 1.4;">-</div>
+                </div>
+            </div>
+
+            <!-- CHARTS SECTION -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h3><i data-lucide="trending-up"></i> Distribuição Mensal de Reenvios</h3>
+                    <div class="chart-scroll-wrapper" style="overflow-x: auto; width: 100%; padding-bottom: 8px;">
+                        <div class="chart-container" id="chartMensalContainer" style="position: relative; height: 280px; min-width: 1200px;">
+                            <canvas id="chartMensal"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3><i data-lucide="bar-chart-3"></i> Distribuição Anual</h3>
+                    <div class="chart-container">
+                        <canvas id="chartAnual"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE SECTION -->
+            <div class="table-card">
+                <div class="table-header" style="flex-direction: column; align-items: stretch; gap: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <h2><i data-lucide="list-ordered"></i> Ranking de Reenvios</h2>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <!-- Exportar CSV -->
+                            <button class="btn-secondary" id="btnExport">
+                                <i data-lucide="download"></i> Exportar CSV
+                            </button>
+
+                            <!-- Baixar Visualização HTML -->
+                            <button class="btn-secondary" id="btnExportHTML" title="Baixar visualização interativa offline (HTML)">
+                                <i data-lucide="file-code"></i> Baixar Painel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-bar" style="width: 100%;">
+                        <!-- Palavra-chave -->
+                        <div class="search-input-wrapper">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="filterSearch" class="search-input" placeholder="Filtrar por palavra-chave...">
+                        </div>
+                        
+                        <!-- Ano Predominante -->
+                        <select id="filterAno" class="select-filter">
+                            <option value="">Todos os Anos</option>
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021 ou antes</option>
+                        </select>
+
+                        <!-- Filtro por Período de Datas -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); padding: 0.2rem 0.5rem; border-radius: 10px;">
+                            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500; padding-left: 0.2rem; display: flex; align-items: center; gap: 0.25rem;"><i data-lucide="calendar" style="width: 14px; height: 14px;"></i> Período:</span>
+                            <input type="date" id="filterDataInicio" class="date-input" style="padding: 0.4rem 0.6rem; border: none; background: transparent; font-size: 0.85rem;" title="Data Inicial">
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">a</span>
+                            <input type="date" id="filterDataFim" class="date-input" style="padding: 0.4rem 0.6rem; border: none; background: transparent; font-size: 0.85rem;" title="Data Final">
+                        </div>
+
+                        <!-- Ordenação -->
+                        <select id="filterOrdem" class="select-filter">
+                            <option value="score">Ordenar por Score (Recência)</option>
+                            <option value="total_reenvios">Ordenar por Qtd. Total</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabela de Dados -->
+                <div class="table-wrapper">
+                    <table id="rankingTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Pos</th>
+                                <th>E-mail Reenviado</th>
+                                <th style="width: 140px; text-align: center;">Total Reenvios</th>
+                                <th style="width: 150px;">Último Reenvio</th>
+                                <th style="width: 120px; text-align: center;">Ano Pred.</th>
+                                <th style="width: 120px; text-align: center;">Mês Pred.</th>
+                                <th style="width: 130px; text-align: center;">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingTableBody">
+                            <!-- Carregado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pagination-container">
+                    <div class="pagination-info" id="paginationInfo">
+                        Mostrando 0 a 0 de 0 registros
+                    </div>
+                    <div class="pagination-pages" id="paginationPages">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA DE CONFIGURAÇÕES -->
+        <div id="viewSettings" style="display: none;">
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2><i data-lucide="sliders"></i> Configurações de Perfis de E-mail</h2>
+                    <button class="btn-secondary" id="btnBackToDash">
+                        <i data-lucide="arrow-left"></i> Voltar ao Dashboard
+                    </button>
+                </div>
+                
+                <div class="settings-grid">
+                    <!-- Tema do Sistema -->
+                    <div class="settings-form-panel" style="grid-column: 1 / -1; margin-bottom: 1rem;">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="palette" style="color: var(--primary-color);"></i> Personalização do Tema</h3>
+                        <p class="help-text">Escolha a aparência e paleta de cores do sistema.</p>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <button class="btn-secondary" id="btnThemePurple" style="flex: 1; min-width: 200px; justify-content: center; gap: 0.5rem; transition: all 0.3s ease;">
+                                <i data-lucide="sparkles" style="color: #8b5cf6;"></i> Tema Roxo DeepMind (Padrão)
+                            </button>
+                            <button class="btn-secondary" id="btnThemeOrange" style="flex: 1; min-width: 200px; justify-content: center; gap: 0.5rem; transition: all 0.3s ease;">
+                                <i data-lucide="zap" style="color: #ff9f1c;"></i> Tema Laranja
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cadastrar Perfil -->
+                    <div class="settings-form-panel">
+                        <h3>Adicionar Novo Perfil</h3>
+                        <p class="help-text">
+                            Crie primeiro a pasta na raiz do projeto manualmente (ex: <code>Infotecauto</code>) e coloque o arquivo <code>credentials.json</code> nela. Depois, registre a pasta no formulário abaixo.
+                        </p>
+                        
+                        <form id="formAddProfile" style="margin-top: 1.5rem;">
+                            <div class="form-group">
+                                <label for="txtProfileName">Nome do Perfil / E-mail</label>
+                                <input type="text" id="txtProfileName" class="form-input" placeholder="Ex: E-mail Comercial Infotecauto" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="txtProfileFolder">Nome exato da Pasta de Credenciais</label>
+                                <input type="text" id="txtProfileFolder" class="form-input" placeholder="Ex: Infotecauto" required>
+                            </div>
+                            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                                <i data-lucide="plus-circle"></i> Salvar e Criar Perfil
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Perfis Cadastrados -->
+                    <div class="settings-list-panel">
+                        <h3>Perfis Disponíveis</h3>
+                        <div class="profiles-list" id="profilesListContainer">
+                            <!-- Gerado dinamicamente via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEDICATED UPLOAD ZONE -->
+                <div class="settings-upload-section" style="margin-top: 3rem; border-top: 1px solid var(--panel-border); padding-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="upload-cloud" style="color: var(--primary-color);"></i> Importar Dados de E-mails Extraídos
+                    </h3>
+                    <p class="help-text" style="margin-bottom: 1.5rem;">
+                        Faça o upload de um arquivo nos formatos <strong>JSON, JSONL, CSV ou TXT</strong> contendo os dados de e-mail já extraídos. O sistema irá importar os dados e aplicar automaticamente as regras de ranking e desempate no dashboard.
+                    </p>
+                    
+                    <input type="file" id="inputUploadFile" accept=".json,.jsonl,.csv,.txt" style="position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden;">
+
+                    <div id="uploadDropArea" style="border-radius: 12px; padding: 2.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="pointer-events: none;">
+                            <i data-lucide="file-text" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem; display: inline-block;"></i>
+                            <p style="font-weight: 600; font-size: 1rem; color: #fff; margin-bottom: 0.5rem;">Arraste e solte o arquivo aqui ou clique para selecionar</p>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Suporta .json, .jsonl, .csv, .txt</p>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadStatusArea" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-border);">
+                        <p id="uploadStatusText" style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">Processando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DETALHES -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; max-width: 85%;">
+                    <h3 id="modalTitle" style="margin: 0;">E-mail Reenviado</h3>
+                    <button id="btnCopyTitle" title="Copiar assunto do e-mail" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #9ca3af; padding: 4px 8px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; outline: none; margin-top: 2px;">
+                        <i data-lucide="copy" style="width: 13px; height: 13px;"></i> Copiar
+                    </button>
+                </div>
+                <button class="modal-close-btn" id="btnModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Info cards rápidos -->
+                <div class="modal-info-cards">
+                    <div class="modal-info-card">
+                        <span>Total de Reenvios</span>
+                        <strong id="modalTotal">-</strong>
+                    </div>
+                    <div class="modal-info-card">
+                        <span>Score Ponderado</span>
+                        <strong id="modalScore">-</strong>
+                    </div>
+                    <div class="modal-info-card">
+                        <span>Primeiro Reenvio</span>
+                        <strong id="modalPrimeiro">-</strong>
+                    </div>
+                    <div class="modal-info-card">
+                        <span>Último Reenvio</span>
+                        <strong id="modalUltimo">-</strong>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Detalhes -->
+                <div class="chart-container" style="height: 180px; margin-top: 1rem; margin-bottom: 1rem;">
+                    <canvas id="chartModalMensal"></canvas>
+                </div>
+
+                <!-- Lista de ocorrências -->
+                <div class="occurrence-list">
+                    <h4>Histórico de Ocorrências</h4>
+                    <div id="modalOccurrenceContainer">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY DE SOLICITAÇÃO DE LOGIN -->
+    <div class="auth-alert-overlay" id="authAlertOverlay" style="display: none;">
+        <div class="auth-alert-card">
+            <h3><i data-lucide="shield-alert" style="color: var(--accent-warning); margin-bottom: -4px;"></i> Autenticação Necessária</h3>
+            <p>Para ler os e-mails enviados, precisamos de permissão somente leitura do Gmail. Clique no botão abaixo para autorizar esta aplicação.</p>
+            <div class="auth-alert-actions">
+                <a href="#" id="lnkAuthGoogle" target="_blank" class="btn-primary" style="text-decoration: none;">
+                    <i data-lucide="log-in"></i> Autorizar com Google
+                </a>
+                <button class="btn-secondary" id="btnAuthCancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direitos Reservados Schiavo no canto inferior direito -->
+    <div class="footer-copyright">
+        Schiavo®
+    </div>
+
+    <!-- Script de lógica -->
+    <script src="js/dashboard.js?v=1.0.2"></script>
+</body>
+</html>

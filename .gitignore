@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+*.db
+*.sqlite3
+
+# Credentials & sensitive configurations
+credentials.json
+token.json
+token.pickle
+config.json
+
+# Local environments / Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE files
+.vs/
+.vscode/
+
+# Large data files, caches, and documents
+*.jsonl
+*.csv
+*.pdf
+*.log
+log_erros.txt
+plano_pdf_conteudo.txt
